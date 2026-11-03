@@ -13,6 +13,7 @@
    GRUNDLAYOUT – kein Scrollen, kein Zoomen, keine Textauswahl
    ========================================================================= */
 :root{
+  color-scheme:dark;
   --ui:rgba(12,18,28,.55); --ui-b:rgba(255,255,255,.28); --acc:#ffb300;
   --sl:env(safe-area-inset-left,0px); --sr:env(safe-area-inset-right,0px);
   --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
@@ -118,6 +119,25 @@ canvas#game{display:block;position:fixed;top:0;right:0;bottom:0;left:0;width:100
 #rotate .ico{font-size:64px;animation:rot 2s ease-in-out infinite;}
 @keyframes rot{0%,20%{transform:rotate(0)}50%,70%{transform:rotate(-90deg)}100%{transform:rotate(-90deg)}}
 @media (orientation:portrait) and (pointer:coarse){#rotate{display:flex;}}
+body.portraitOk #rotate{display:none!important;}
+#rotate .mbtn{margin-top:18px;}
+/* Hochformat-Layout (falls das Gerät nicht gedreht werden kann) */
+@media (orientation:portrait){
+  #minimap{top:calc(60px + var(--st));width:100px;height:100px;}
+  #rec{top:calc(166px + var(--st));}
+  #airt{top:calc(220px + var(--st));}
+  #joy{width:124px;height:124px;left:calc(12px + var(--sl));}
+  #knob{left:32px;top:32px;width:56px;height:56px;}
+  #gas{width:80px;height:130px;right:calc(12px + var(--sr));}
+  #brake{width:76px;height:84px;right:calc(100px + var(--sr));}
+  #hbrake{width:76px;height:50px;right:calc(100px + var(--sr));bottom:calc(110px + var(--sb));}
+  #speedo{bottom:calc(172px + var(--sb));}
+  #msg,#jump{white-space:normal;width:max-content;max-width:92vw;text-align:center;}
+  #cars{flex-wrap:wrap;}
+  .card{flex:1 1 30%;max-width:none;}
+  #menuTop{flex-direction:column;}
+  #menuRec{text-align:left;}
+}
 </style>
 </head>
 <body>
@@ -173,7 +193,7 @@ canvas#game{display:block;position:fixed;top:0;right:0;bottom:0;left:0;width:100
   <div id="lbar"><i></i></div>
   <div id="ltext">Lade 3D-Engine …</div>
 </div>
-<div id="rotate"><div class="ico">📱</div><p>Bitte das Handy ins <b>Querformat</b> drehen</p></div>
+<div id="rotate"><div class="ico">📱</div><p>Bitte das Handy ins <b>Querformat</b> drehen</p><div class="mbtn" id="rotSkip">Trotzdem im Hochformat spielen</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -201,6 +221,8 @@ function mulberry32(a) {
   };
 }
 let rng = mulberry32(20241103);
+// Hochformat-Hinweis wegklicken (z. B. wenn sich die App nicht drehen lässt)
+document.getElementById('rotSkip').addEventListener('click', () => document.body.classList.add('portraitOk'));
 const rand = (a = 0, b = 1) => a + (b - a) * rng();
 const randInt = (n) => Math.floor(rng() * n);
 const pick = (arr) => arr[Math.floor(rng() * arr.length)];
@@ -2431,8 +2453,8 @@ function toggleFullscreen() {
     try {
       const p = req.call(el, { navigationUI: 'hide' });
       const lock = () => { try { const o = screen.orientation; if (o && o.lock) o.lock('landscape').catch(() => {}); } catch (e) { /* */ } };
-      if (p && p.then) p.then(lock).catch(() => {}); else lock();
-    } catch (e) { /* */ }
+      if (p && p.then) p.then(lock).catch(() => showMsg('Vollbild ist hier nicht verfügbar')); else lock();
+    } catch (e) { showMsg('Vollbild ist hier nicht verfügbar'); }
   } else (d.exitFullscreen || d.webkitExitFullscreen).call(d);
 }
 function toggleMute() { settings.muted = !settings.muted; SND.setMuted(settings.muted); $('bMute').textContent = settings.muted ? '🔇' : '🔊'; saveSettings(); }
@@ -2496,6 +2518,7 @@ function updateCamera(dt) {
     camera.lookAt(P0.x + Math.sin(cam.yaw) * 3, cam.y + h * 0.2, P0.z + Math.cos(cam.yaw) * 3);
     camera.fov = 62 + Math.min(16, sp * 0.2);
   }
+  if (camera.aspect < 1) camera.fov = Math.min(100, camera.fov * 1.3);   // Hochformat: mehr Überblick
   cam.shake = Math.max(0, cam.shake - dt * 2.5);
   if (camera.near !== near) camera.near = near;
   camera.updateProjectionMatrix();
