@@ -20,12 +20,12 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0d1520;color:#fff;
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;touch-action:none;
-  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;position:fixed;inset:0;}
-canvas#game{display:block;position:fixed;inset:0;width:100%;height:100%;outline:none;}
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;position:fixed;top:0;right:0;bottom:0;left:0;}
+canvas#game{display:block;position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;outline:none;}
 .hidden{display:none!important;}
 
 /* ------------------------------ HUD ----------------------------------- */
-#hud{position:fixed;inset:0;pointer-events:none;}
+#hud{position:fixed;top:0;right:0;bottom:0;left:0;pointer-events:none;}
 #hud .ibtn,#controls,#controls *,#minimap{pointer-events:auto;}
 #topbar{position:fixed;top:calc(8px + var(--st));left:calc(8px + var(--sl));display:flex;gap:6px;}
 .ibtn{width:44px;height:44px;border-radius:12px;background:var(--ui);border:1px solid var(--ui-b);
@@ -50,7 +50,7 @@ canvas#game{display:block;position:fixed;inset:0;width:100%;height:100%;outline:
 #msg.show{opacity:1;}
 
 /* --------------------------- Touch-Steuerung --------------------------- */
-#controls{position:fixed;inset:auto 0 0 0;height:0;}
+#controls{position:fixed;left:0;right:0;bottom:0;height:0;}
 #joy{position:fixed;left:calc(22px + var(--sl));bottom:calc(22px + var(--sb));width:150px;height:150px;border-radius:50%;
   background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.3);}
 #joy::before{content:"";position:absolute;left:50%;top:8px;bottom:8px;width:2px;background:rgba(255,255,255,.12);}
@@ -79,7 +79,7 @@ canvas#game{display:block;position:fixed;inset:0;width:100%;height:100%;outline:
 }
 
 /* ------------------------- Start- / Garagenmenü ------------------------ */
-#menu{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;
+#menu{position:fixed;top:0;right:0;bottom:0;left:0;display:flex;flex-direction:column;justify-content:space-between;
   padding:calc(10px + var(--st)) calc(14px + var(--sr)) calc(10px + var(--sb)) calc(14px + var(--sl));
   background:linear-gradient(to bottom,rgba(0,0,0,.6),rgba(0,0,0,0) 28%,rgba(0,0,0,0) 45%,rgba(0,0,0,.82));}
 #menuTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
@@ -107,13 +107,13 @@ canvas#game{display:block;position:fixed;inset:0;width:100%;height:100%;outline:
 #keyhelp{font-size:11px;opacity:.7;text-align:center;margin-top:5px;}
 
 /* ------------------------- Laden / Drehen ------------------------------ */
-#loading{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#1c2c44,#0a0f18);display:flex;flex-direction:column;
+#loading{position:fixed;top:0;right:0;bottom:0;left:0;background:radial-gradient(circle at 50% 40%,#1c2c44,#0a0f18);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:14px;z-index:20;}
 #loading .title{font-size:clamp(28px,9vh,56px);}
 #lbar{width:min(60vw,360px);height:8px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden;}
 #lbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb300,#ff6a00);transition:width .15s;}
 #ltext{font-size:13px;opacity:.8;}
-#rotate{position:fixed;inset:0;background:#0d1520;display:none;flex-direction:column;align-items:center;justify-content:center;
+#rotate{position:fixed;top:0;right:0;bottom:0;left:0;background:#0d1520;display:none;flex-direction:column;align-items:center;justify-content:center;
   z-index:30;text-align:center;padding:20px;}
 #rotate .ico{font-size:64px;animation:rot 2s ease-in-out infinite;}
 @keyframes rot{0%,20%{transform:rotate(0)}50%,70%{transform:rotate(-90deg)}100%{transform:rotate(-90deg)}}
@@ -1592,7 +1592,9 @@ function buildStuntPark() {
   seg(SP.x0, SP.z0, 415, SP.z0); seg(462, SP.z0, SP.x1, SP.z0);
   seg(SP.x0, SP.z1, SP.x1, SP.z1); seg(SP.x0, SP.z0, SP.x0, SP.z1); seg(SP.x1, SP.z0, SP.x1, SP.z1);
   bi.build();
-  addSign(438, SP.h, 408, 0, 14, 4, textTexture(['STUNTPARK', 'Looping · Halfpipe · Mega-Rampe'], 512, 150, '#b71c1c', '#ffffff', '40px sans-serif'), 4.5);
+  // Schild als Tor über der Zufahrt (Pfosten links/rechts neben der Straße)
+  let gi = 0; for (let i = 0; i < spur.n; i++) if (Math.abs(spur.z[i] - 404) < Math.abs(spur.z[gi] - 404)) gi = i;
+  addSign(spur.x[gi], spur.h[gi], spur.z[gi], Math.atan2(spur.tx[gi], spur.tz[gi]) + Math.PI, 15, 4, textTexture(['STUNTPARK', 'Looping · Halfpipe · Mega-Rampe'], 512, 150, '#b71c1c', '#ffffff', '40px sans-serif'), 4.5);
 }
 
 /* =========================================================================
@@ -2010,9 +2012,11 @@ class Car {
         this.w.addScaledVector(_az, inp.steer * k);
       } else {
         this.w.addScaledVector(_ay, -inp.steer * 1.4 * dt);
-        const wx = this.w.dot(_ax), wz = this.w.dot(_az), damp = Math.min(1, 2.2 * dt);
-        this.w.addScaledVector(_ax, -wx * damp).addScaledVector(_az, -wz * damp);
-        if (_ay.y > 0.15) { _tv.set(-_ay.z, 0, _ay.x); this.w.addScaledVector(_tv, 3.5 * dt); }   // Aufrichten (ay × Welt-oben)
+        if (_ay.y > 0.15) {   // nur halbwegs aufrecht stabilisieren – angefangene Saltos/Rollen drehen weiter
+          const wx = this.w.dot(_ax), wz = this.w.dot(_az), damp = Math.min(1, 2.2 * dt);
+          this.w.addScaledVector(_ax, -wx * damp).addScaledVector(_az, -wz * damp);
+          _tv.set(-_ay.z, 0, _ay.x); this.w.addScaledVector(_tv, 3.5 * dt);   // Aufrichten (ay × Welt-oben)
+        }
       }
     }
     // ---------------- Luftwiderstand & Abtrieb ----------------
@@ -2327,7 +2331,8 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* privat / gesperrt */ } },
 };
-const settings = Object.assign({ steer: 'joy', q: 1, muted: false, car: 0 }, store.get('ff3d_set', {}));
+const lowEnd = isTouch && ((navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 3);
+const settings = Object.assign({ steer: 'joy', q: lowEnd ? 0 : 1, muted: false, car: 0 }, store.get('ff3d_set', {}));
 const records = Object.assign({ dist: 0, air: 0, distCar: '', airCar: '' }, store.get('ff3d_rec', {}));
 const saveSettings = () => store.set('ff3d_set', settings);
 
@@ -2659,7 +2664,7 @@ function drawMinimap() {
   g.strokeText('N', Math.cos(na) * (R - 18), Math.sin(na) * (R - 18)); g.fillText('N', Math.cos(na) * (R - 18), Math.sin(na) * (R - 18));
   g.restore();
 }
-let fps = 60, fpsAcc = 0, fpsN = 0;
+let fps = 60, fpsAcc = 0, fpsN = 0, fpsHint = false, playTime = 0;
 function updateHUD(dt) {
   if (msgTimer > 0) { msgTimer -= dt; if (msgTimer <= 0) $('msg').classList.remove('show'); }
   if (jumpTimer > 0) { jumpTimer -= dt; if (jumpTimer <= 0) $('jump').classList.remove('show'); }
@@ -2669,6 +2674,8 @@ function updateHUD(dt) {
   if (hudTick % 3 === 0) drawMinimap();
   if (hudTick % 15 === 0) {
     const hh = Math.floor(tod * 24), mm = Math.floor((tod * 24 - hh) * 60);
+    playTime += 0.25;
+    if (fps < 28 && settings.q > 0 && !fpsHint && playTime > 10) { fpsHint = true; showMsg('Ruckelt es? In der Garage 🚗 Grafik auf „Niedrig“ stellen', 4); }
     $('rec').innerHTML = `🏆 Weite ${records.dist.toFixed(1)} m<br>⏱ Flug ${records.air.toFixed(2)} s<br>🕐 ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')} · ${Math.round(fps)} FPS`;
   }
   $('airt').textContent = J.air && J.airTime > 0.35 ? `✈ ${J.airTime.toFixed(1)} s` : '';
